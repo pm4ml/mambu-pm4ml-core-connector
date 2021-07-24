@@ -1,0 +1,8 @@
+{
+  type: "BUSINESS",
+  idType: header.idType,
+  idValue: header.idValue,
+  [if (std.objectHas(payload, "loanName") && payload.loanName != null)
+   then "displayName"]: payload.loanName,
+  loanAmountDue: payload.PricipalDue + payload.InterestDue + payload.FeesDue + payload.PenaltyDue
+}
