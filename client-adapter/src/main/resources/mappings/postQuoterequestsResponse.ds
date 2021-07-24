@@ -1,0 +1,40 @@
+local getLoanByIdResponse = cml.exchangeProperty('getLoanByIdResponse')[0];
+local origPayload = cml.exchangeProperty('origPayload');
+local formatDate(dateStr) = DS.ZonedDateTime.format(dateStr, "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd");
+
+local checkAmountForNull(value) = if (value != null) then std.parseInt(value) else 0;
+
+local amountDue = std.toString(checkAmountForNull(getLoanByIdResponse.principalDue)
+                    + checkAmountForNull(getLoanByIdResponse.interestDue)
+                    + checkAmountForNull(getLoanByIdResponse.feesDue)
+                    + checkAmountForNull(getLoanByIdResponse.penaltyDue));
+
+local extensionList = std.filter(function(item) item != null, [
+  {
+    key: "mfiName",
+    value: cml.header('mfiName')
+  },
+  {
+    key: "amountDue",
+    value: amountDue
+  },
+  {
+    key: "dueDate",
+    value: formatDate(getLoanByIdResponse.lastInterestAppliedDate)
+  }
+]);
+
+{
+  "quoteId": origPayload.quoteId,
+  "transactionId": origPayload.transactionId,
+  "transferAmount": if (cml.header('requestAmount') == "0") then amountDue else cml.header('requestAmount'),
+  "transferAmountCurrency": origPayload.currency,
+  "payeeReceiveAmount": if (cml.header('requestAmount') == "0") then amountDue else cml.header('requestAmount'),
+  "payeeReceiveAmountCurrency": origPayload.currency,
+  "payeeFspFeeAmount": "0",
+  "payeeFspFeeAmountCurrency": origPayload.currency,
+  "payeeFspCommissionAmount": "0",
+  "payeeFspCommissionAmountCurrency": origPayload.currency,
+  [if (extensionList != [])
+   then "extensionList"]: extensionList
+}

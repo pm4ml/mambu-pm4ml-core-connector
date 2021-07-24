@@ -1,0 +1,6 @@
+{
+  "transactionDetails": {
+    "transactionChannelId": "cash"
+  },
+  "amount": cml.header('amount')
+}
