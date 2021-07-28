@@ -14,56 +14,74 @@ public class QuotesRouter extends RouteBuilder {
 	private final TrimMFICode trimMFICode = new TrimMFICode();
 	private final RouteExceptionHandlingConfigurer exceptionHandlingConfigurer = new RouteExceptionHandlingConfigurer();
 
-	private static final String ROUTE_ID = "com.modusbox.postQuoterequests";
-	private static final String COUNTER_NAME = "counter_post_quoterequests_requests";
 	private static final String TIMER_NAME = "histogram_post_quoterequests_timer";
-	private static final String HISTOGRAM_NAME = "histogram_post_quoterequests_requests_latency";
 
-	public static final Counter requestCounter = Counter.build()
-			.name(COUNTER_NAME)
+	public static final Counter reqCounter = Counter.build()
+			.name("counter_post_quoterequests_requests_total")
 			.help("Total requests for POST /quoterequests.")
 			.register();
 
-	private static final Histogram requestLatency = Histogram.build()
-			.name(HISTOGRAM_NAME)
+	private static final Histogram reqLatency = Histogram.build()
+			.name("histogram_post_quoterequests_request_latency")
 			.help("Request latency in seconds for POST /quoterequests.")
 			.register();
 
     public void configure() {
+
 		// Add our global exception handling strategy
 		exceptionHandlingConfigurer.configureExceptionHandling(this);
 
-        from("direct:postQuoteRequests").routeId(ROUTE_ID).doTry()
+        from("direct:postQuoteRequests").routeId("com.modusbox.postQuoterequests").doTry()
 				.process(exchange -> {
-					requestCounter.inc(1); // increment Prometheus Counter metric
-					exchange.setProperty(TIMER_NAME, requestLatency.startTimer()); // initiate Prometheus Histogram metric
+					reqCounter.inc(1); // increment Prometheus Counter metric
+					exchange.setProperty(TIMER_NAME, reqLatency.startTimer()); // initiate Prometheus Histogram metric
 				})
-			.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-					"'Request received, POST /quoterequests', " +
-					"null, null, 'Input Payload: ${body}')")
-			.setHeader("mfiName", simple("{{dfsp.name}}"))
-			.setHeader("idType", simple("${body.getTo().getIdType()}"))
-			.setHeader("idValue", simple("${body.getTo().getIdValue()}"))
-			.setHeader("requestAmount", simple("${body.getAmount()}"))
-			.process(trimMFICode)
-			.setProperty("origPayload", simple("${body}"))
+				.to("bean:customJsonMessage?method=logJsonMessage(" +
+						"'info', " +
+						"${header.X-CorrelationId}, " +
+						"'Request received POST /quoterequests', " +
+						"'Tracking the request', " +
+						"'Call the Mambu API,  Track the response', " +
+						"'fspiop-source: ${header.fspiop-source} Input Payload: ${body}')") // default logger
+				/*
+				 * BEGIN processing
+				 */
+				.setHeader("mfiName", simple("{{dfsp.name}}"))
+				.setHeader("idType", simple("${body.getTo().getIdType()}"))
+				.setHeader("idValue", simple("${body.getTo().getIdValue()}"))
+				.setHeader("requestAmount", simple("${body.getAmount()}"))
+				.process(trimMFICode)
+				.setProperty("origPayload", simple("${body}"))
 
-			// Fetch the loan account by ID so we can find customer ID
-			.to("direct:getLoanById")
+				// Fetch the loan account by ID so we can find customer ID
+				.to("direct:getLoanById")
 
-			.marshal().json()
-			.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponse.ds"))
-			.setBody(simple("${body.content}"))
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponse.ds"))
+				.setBody(simple("${body.content}"))
+				.removeHeaders("getLoanByIdResponse")
+				.removeHeaders("getLoanScheduleByIdResponse")
+				.to("direct:choiceRoute")
+				/*
+				 * END processing
+				 */
+				.to("bean:customJsonMessage?method=logJsonMessage(" +
+						"'info', " +
+						"${header.X-CorrelationId}, " +
+						"'Response for POST /quoterequests', " +
+						"'Tracking the response', " +
+						"null, " +
+						"'Output Payload: ${body}')") // default logger
+				.doFinally().process(exchange -> {
+					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
+				}).end()
+		;
 
-			.doFinally().process(exchange -> {
-				((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
-			}).end()
-			.choice()
-				.when(simple("${body?.get('extensionList')[1].get('value')} == '0'"))
+		from("direct:choiceRoute")
+				.choice()
+					.when(simple("${body?.get('extensionList')[1].get('value')} == '0'"))
 					.to("direct:getLoanScheduleById")
-			.end()
-			.removeHeaders("getLoanByIdResponse")
-			.removeHeaders("getLoanScheduleByIdResponse")
+				.endChoice()
 		;
 
 		from("direct:getLoanScheduleById")

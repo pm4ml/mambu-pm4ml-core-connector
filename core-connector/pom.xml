@@ -11,7 +11,7 @@
     </parent>
 
     <artifactId>core-connector</artifactId>
-    <name>Mambu Core Connector :: Parent</name>
+    <name>Mambu Core Connector :: Main</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -229,7 +229,7 @@
                 <version>${camel.version}</version>
                 <configuration>
                     <!-- <specificationUri>${project.basedir}/src/spec/api.yaml</specificationUri> -->
-                    <className>ClientAdapterAPI</className>
+                    <className>CoreConnectorAPI</className>
                     <outputDirectory>${project.basedir}/src/main/java</outputDirectory>
                     <packageName>com.modusbox.client.router</packageName>
                     <modelOutput>${project.basedir}</modelOutput>

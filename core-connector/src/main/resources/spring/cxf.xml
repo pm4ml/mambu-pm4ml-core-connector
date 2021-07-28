@@ -19,7 +19,7 @@
         </cxf:features>
     </cxf:bus>-->
 
-    <bean id="clientAdapterAPI" class="com.modusbox.client.router.ClientAdapterAPI" />
+    <bean id="CoreConnectorAPI" class="com.modusbox.client.router.CoreConnectorAPI" />
     <bean id="partiesRouter" class="com.modusbox.client.router.PartiesRouter" />
     <bean id="quotesRouter" class="com.modusbox.client.router.QuotesRouter" />
     <bean id="transfersRouter" class="com.modusbox.client.router.TransfersRouter" />
@@ -30,7 +30,7 @@
 
     <camel:camelContext>
 <!--        <camel:package>com.modusbox.client.router</camel:package>-->
-        <camel:routeBuilder ref="clientAdapterAPI"/>
+        <camel:routeBuilder ref="CoreConnectorAPI"/>
         <camel:routeBuilder ref="partiesRouter"/>
         <camel:routeBuilder ref="quotesRouter"/>
         <camel:routeBuilder ref="transfersRouter"/>

@@ -18,7 +18,7 @@ workflows:
     jobs:
       - docker/publish:
           executor: default-machine
-          context: wmt
+          context: pm4ml-ci
           before_build:
             - restore_cache:
                 keys:

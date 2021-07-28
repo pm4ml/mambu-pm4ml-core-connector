@@ -15,18 +15,15 @@ public class PartiesRouter extends RouteBuilder {
 	private final TrimMFICode trimMFICode = new TrimMFICode();
 	private final RouteExceptionHandlingConfigurer exceptionHandlingConfigurer = new RouteExceptionHandlingConfigurer();
 
-	private static final String ROUTE_ID = "com.modusbox.getPartiesByIdTypeIdValue";
-	private static final String COUNTER_NAME = "counter_get_parties_requests";
 	private static final String TIMER_NAME = "histogram_get_parties_timer";
-	private static final String HISTOGRAM_NAME = "histogram_get_parties_requests_latency";
 
-	public static final Counter requestCounter = Counter.build()
-			.name(COUNTER_NAME)
+	public static final Counter reqCounter = Counter.build()
+			.name("counter_get_parties_requests_total")
 			.help("Total requests for GET /parties.")
 			.register();
 
-	private static final Histogram requestLatency = Histogram.build()
-			.name(HISTOGRAM_NAME)
+	private static final Histogram reqLatency = Histogram.build()
+			.name("histogram_get_parties_request_latency")
 			.help("Request latency in seconds for GET /parties.")
 			.register();
 
@@ -36,27 +33,39 @@ public class PartiesRouter extends RouteBuilder {
 		exceptionHandlingConfigurer.configureExceptionHandling(this);
 
 		// In this case the GET parties will return the loan account with client details
-		from("direct:getPartiesByIdTypeIdValue").routeId(ROUTE_ID).doTry()
+		from("direct:getPartiesByIdTypeIdValue").routeId("com.modusbox.getPartiesByIdTypeIdValue").doTry()
 				.process(exchange -> {
-					requestCounter.inc(1); // increment Prometheus Counter metric
-					exchange.setProperty(TIMER_NAME, requestLatency.startTimer()); // initiate Prometheus Histogram metric
+					reqCounter.inc(1); // increment Prometheus Counter metric
+					exchange.setProperty(TIMER_NAME, reqLatency.startTimer()); // initiate Prometheus Histogram metric
 				})
-				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Request received, GET /parties/${header.idType}/${header.idValue}', " +
-						"null, null, 'fspiop-source: ${header.fspiop-source}')")
+				.to("bean:customJsonMessage?method=logJsonMessage(" +
+						"'info', " +
+						"${header.X-CorrelationId}, " +
+						"'Request received GET /parties/${header.idType}/${header.idValue}', " +
+						"'Tracking the request', " +
+						"'Call the Mambu API,  Track the response', " +
+						"'fspiop-source: ${header.fspiop-source} Input Payload: ${body}')") // default logger
+				/*
+				 * BEGIN processing
+				 */
 				// Trim MFI code from id
 				.process(trimMFICode)
 				// Fetch the client information for the user the loan acc belongs to and get name
 				.to("direct:getClientById")
-
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/getPartiesResponse.ds"))
 				.setBody(simple("${body.content}"))
-
 				.removeHeaders("getClientByIdResponse")
-				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Final Response: ${body}', " +
-						"null, null, 'Response of GET parties/${header.idType}/${header.idValue} API')")
+				/*
+				 * END processing
+				 */
+				.to("bean:customJsonMessage?method=logJsonMessage(" +
+						"'info', " +
+						"${header.X-CorrelationId}, " +
+						"'Response for GET /parties/${header.idType}/${header.idValue}', " +
+						"'Tracking the response', " +
+						"null, " +
+						"'Output Payload: ${body}')") // default logger
 				.doFinally().process(exchange -> {
 					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
 				}).end()

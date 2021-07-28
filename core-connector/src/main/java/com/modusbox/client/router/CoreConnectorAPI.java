@@ -10,7 +10,7 @@ import javax.annotation.Generated;
  * Generated from OpenApi specification by Camel REST DSL generator.
  */
 @Generated("org.apache.camel.generator.openapi.PathGenerator")
-public final class ClientAdapterAPI extends RouteBuilder {
+public final class CoreConnectorAPI extends RouteBuilder {
 
     private final RouteExceptionHandlingConfigurer exceptionHandlingConfigurer = new RouteExceptionHandlingConfigurer();
 
