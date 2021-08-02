@@ -20,7 +20,9 @@ local extensionList = std.filter(function(item) item != null, [
   },
   {
     key: "dueDate",
-    value: formatDate(getLoanByIdResponse.lastInterestAppliedDate)
+    value: if (std.objectHas(getLoanByIdResponse, "lastInterestAppliedDate") && getLoanByIdResponse.lastInterestAppliedDate != null)
+           then formatDate(getLoanByIdResponse.lastInterestAppliedDate)
+           else ""
   }
 ]);
 
