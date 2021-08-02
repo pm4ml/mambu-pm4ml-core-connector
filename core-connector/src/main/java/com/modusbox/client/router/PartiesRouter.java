@@ -135,6 +135,9 @@ public class PartiesRouter extends RouteBuilder {
 												"\"message\": \"No data found\"} "))
 						.stop()
 				.end()
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/getLoanByIdResponse.ds"))
+				.setBody(simple("${body.content}"))
 				// Save response as property to use later
 				.setProperty("getLoanByIdResponse", body())
 		;

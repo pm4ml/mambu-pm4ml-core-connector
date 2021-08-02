@@ -3,6 +3,7 @@ local origPayload = cml.exchangeProperty('origPayload');
 local getLoanScheduleByIdResponse = payload;
 
 local loanSchedule = getLoanScheduleByIdResponse.installments;
+local partiallyPaidInstallments = std.filter(function(i) i.state == "PARTIALLY_PAID", loanSchedule);
 local pendingInstallments = std.filter(function(i) i.state == "PENDING", loanSchedule);
 
 local calcTotalDue(installment) =
@@ -11,9 +12,23 @@ local calcTotalDue(installment) =
   installment.fee.amount.expected +
   installment.penalty.amount.expected;
 
-local amountDue = if (pendingInstallments != [])
-                  then std.toString(calcTotalDue(pendingInstallments[0]))
-                  else "0";
+local calcTotalDueAfterPaidAmount(installment) =
+  (installment.principal.amount.expected +
+  installment.interest.amount.expected +
+  installment.fee.amount.expected +
+  installment.penalty.amount.expected)
+  -
+  (installment.principal.amount.paid +
+  installment.interest.amount.paid +
+  installment.fee.amount.paid +
+  installment.penalty.amount.paid);
+
+local amountDue = if (partiallyPaidInstallments != [])
+                    then std.toString(calcTotalDueAfterPaidAmount(partiallyPaidInstallments[0]))
+                  else if (pendingInstallments != [])
+                    then std.toString(calcTotalDue(pendingInstallments[0]))
+                  else
+                    "0";
 
 local dueDate = if (pendingInstallments != [])
                 then std.substr(pendingInstallments[0].dueDate, 0, 10)
