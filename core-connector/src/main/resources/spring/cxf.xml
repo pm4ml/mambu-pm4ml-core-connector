@@ -13,11 +13,11 @@
         http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd
         ">
 
-    <!--<cxf:bus id="cxf-bus">
+    <cxf:bus id="cxf-bus">
         <cxf:features>
-            <cxf:logging/>
+<!--            <cxf:logging/>-->
         </cxf:features>
-    </cxf:bus>-->
+    </cxf:bus>
 
     <bean id="CoreConnectorAPI" class="com.modusbox.client.router.CoreConnectorAPI" />
     <bean id="partiesRouter" class="com.modusbox.client.router.PartiesRouter" />

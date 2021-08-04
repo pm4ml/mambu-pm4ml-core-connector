@@ -14,6 +14,7 @@ java \
 -Ddfsp.host="https://dfsp/api" \
 -Ddfsp.username="user" \
 -Ddfsp.password="pass" \
+-Ddfsp.name="DFSP CO. LTD." \
 -jar ./core-connector/target/core-connector.jar
 ```
 ```
@@ -22,6 +23,7 @@ docker run --rm \
 -e DFSP_HOST="https://dfsp/api" \
 -e DFSP_USERNAME="user" \
 -e DFSP_PASSWORD="P\@ss0rd" \
+-e DFSP_NAME="DFSP CO. LTD." \
 -p 3003:3003 core-connector:latest
 ```
 **NOTE:** keep the values in double quotes (") and scape any special character (\\@).

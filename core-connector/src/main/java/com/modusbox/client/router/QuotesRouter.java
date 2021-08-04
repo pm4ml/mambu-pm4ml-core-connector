@@ -100,8 +100,8 @@ public class QuotesRouter extends RouteBuilder {
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getLoanScheduleById', " +
 						"'Tracking the request', 'Track the response', " +
-						"'Request sent to, GET https://{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule')")
-				.toD("https://{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule")
+						"'Request sent to, GET {{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule')")
+				.toD("{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule")
 
 				.unmarshal().json()
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +

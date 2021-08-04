@@ -88,8 +88,8 @@ public class PartiesRouter extends RouteBuilder {
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getClientByLoanId', " +
 						"'Tracking the request', 'Track the response', " +
-						"'Request sent to, GET https://{{dfsp.host}}/clients/${header.idValueTrimmed}')")
-				.toD("https://{{dfsp.host}}/clients/${header.idValueTrimmed}")
+						"'Request sent to, GET {{dfsp.host}}/clients/${header.idValueTrimmed}')")
+				.toD("{{dfsp.host}}/clients/${header.idValueTrimmed}")
 
 				.unmarshal().json()
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
@@ -121,8 +121,8 @@ public class PartiesRouter extends RouteBuilder {
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getLoanById', " +
 						"'Tracking the request', 'Track the response', " +
-						"'Request sent to, POST https://{{dfsp.host}}/loans/search')")
-				.toD("https://{{dfsp.host}}/loans/search")
+						"'Request sent to, POST {{dfsp.host}}/loans/search')")
+				.toD("{{dfsp.host}}/loans/search")
 
 				.unmarshal().json()
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +

@@ -60,10 +60,10 @@ public class SendmoneyRouter extends RouteBuilder {
                 .setHeader("Content-Type", constant("application/json"))
                 .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
                         "'Calling outbound API, postTransfers, " +
-                        "POST {{outbound.endpoint}}', " +
+                        "POST {{ml-conn.outbound.host}}', " +
                         "'Tracking the request', 'Track the response', 'Input Payload: ${body}')")
                 .marshal().json(JsonLibrary.Gson)
-                .toD("{{outbound.endpoint}}/transfers?bridgeEndpoint=true&throwExceptionOnFailure=false")
+                .toD("{{ml-conn.outbound.host}}/transfers?bridgeEndpoint=true&throwExceptionOnFailure=false")
                 .unmarshal().json(JsonLibrary.Gson)
                 /*
                  * END processing
@@ -102,9 +102,9 @@ public class SendmoneyRouter extends RouteBuilder {
                 .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
                         "'Calling outbound API, putTransfersById', " +
                         "'Tracking the request', 'Track the response', " +
-                        "'Request sent to PUT https://{{outbound.endpoint}}/transfers/${header.transferId}')")
+                        "'Request sent to PUT {{ml-conn.outbound.host}}/transfers/${header.transferId}')")
                 .marshal().json(JsonLibrary.Gson)
-                .toD("{{outbound.endpoint}}/transfers/${header.transferId}?bridgeEndpoint=true&throwExceptionOnFailure=false")
+                .toD("{{ml-conn.outbound.host}}/transfers/${header.transferId}?bridgeEndpoint=true&throwExceptionOnFailure=false")
                 .unmarshal().json(JsonLibrary.Gson)
                 /*
                  * END processing

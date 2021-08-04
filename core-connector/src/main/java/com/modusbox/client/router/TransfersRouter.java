@@ -114,9 +114,9 @@ public class TransfersRouter extends RouteBuilder {
 
                 .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
                         "'Calling Mambu API, postTransaction, " +
-                           "POST https://{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ', " +
+                           "POST {{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ', " +
                         "'Tracking the request', 'Track the response', 'Input Payload: ${body}')")
-                .toD("https://{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ")
+                .toD("{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ")
                 .to("bean:customJsonMessage?method=logJsonMessage(" +
                         "'info', " +
                         "${header.X-CorrelationId}, " +
