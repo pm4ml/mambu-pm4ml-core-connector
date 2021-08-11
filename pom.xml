@@ -22,23 +22,22 @@
         <java.version>1.8</java.version>
         <compiler.source.version>1.8</compiler.source.version>
         <compiler.target.version>1.8</compiler.target.version>
-
-        <camel.version>3.7.3</camel.version>
+        <camel.version>3.7.5</camel.version>
+        <datasonnet.version>2.1.2</datasonnet.version>
         <spring-boot.version>2.2.5.RELEASE</spring-boot.version>
-
         <maven.build-helper.version>3.0.0</maven.build-helper.version>
         <maven.compiler.version>3.8.0</maven.compiler.version>
-        <openapi-generator.version>4.3.0</openapi-generator.version>
-        <hibernate.version>5.3.5.Final</hibernate.version>
+        <openapi-generator.version>5.2.0</openapi-generator.version>
+        <hibernate.version>7.0.1.Final</hibernate.version>
         <jackson.version>2.10.3</jackson.version>
         <cxf.version>3.3.6</cxf.version>
         <cucumber.version>2.4.0</cucumber.version>
+        <prometheus-client.version>0.10.0</prometheus-client.version>
     </properties>
 
     <modules>
         <module>core-connector</module>
         <module>core-connector-interface</module>
-        <!--        <module>core-connector-soap-mock</module>-->
     </modules>
 
     <dependencyManagement>
