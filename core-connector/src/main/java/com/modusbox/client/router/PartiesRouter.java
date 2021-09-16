@@ -52,6 +52,24 @@ public class PartiesRouter extends RouteBuilder {
 				.process(trimMFICode)
 				// Fetch the client information for the user the loan acc belongs to and get name
 				.to("direct:getClientById")
+
+
+				//added for extension list
+				.setHeader("mfiName", simple("{{dfsp.name}}"))
+				.setHeader("idType", simple("${header.idType}"))
+				.setHeader("idValue", simple("${body.getTo().getIdValue()}"))
+				.process(trimMFICode)
+
+
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponse.ds"))
+				.setBody(simple("${body.content}"))
+				.removeHeaders("getLoanByIdResponse")
+				.removeHeaders("getLoanScheduleByIdResponse")
+				.to("direct:choiceRoute")
+
+				//add transformation here
+				//end add for extension list
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/getPartiesResponse.ds"))
 				.setBody(simple("${body.content}"))
