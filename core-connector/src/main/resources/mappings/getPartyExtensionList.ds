@@ -1,0 +1,32 @@
+local getLoanByIdResponse = cml.exchangeProperty('getLoanByIdResponse')[0];
+
+local checkAmountForNull(value) = if (value != null) then std.parseInt(value) else 0;
+
+local formatDate(dateStr) = DS.ZonedDateTime.format(dateStr, "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd");
+
+local amountDue = std.toString(checkAmountForNull(getLoanByIdResponse.principalDue)
+                    + checkAmountForNull(getLoanByIdResponse.interestDue)
+                    + checkAmountForNull(getLoanByIdResponse.feesDue)
+                    + checkAmountForNull(getLoanByIdResponse.penaltyDue));
+
+local extensionList = std.filter(function(item) item != null, [
+  {
+    key: "mfiName",
+    value: cml.header('mfiName')
+  },
+  {
+    key: "amountDue",
+    value: amountDue
+  },
+  {
+    key: "dueDate",
+    value: if (std.objectHas(getLoanByIdResponse, "lastInterestAppliedDate") && getLoanByIdResponse.lastInterestAppliedDate != null)
+           then formatDate(getLoanByIdResponse.lastInterestAppliedDate)
+           else ""
+  }
+]);
+
+{
+  [if (extensionList != [])
+   then "extensionList"]: extensionList
+}

@@ -52,28 +52,30 @@ public class PartiesRouter extends RouteBuilder {
 				.process(trimMFICode)
 				// Fetch the client information for the user the loan acc belongs to and get name
 				.to("direct:getClientById")
-
-
-				//added for extension list
-				.setHeader("mfiName", simple("{{dfsp.name}}"))
-				.setHeader("idType", simple("${header.idType}"))
-				.setHeader("idValue", simple("${body.getTo().getIdValue()}"))
-				.process(trimMFICode)
-
-
-				.marshal().json()
-				.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponse.ds"))
-				.setBody(simple("${body.content}"))
-				.removeHeaders("getLoanByIdResponse")
-				.removeHeaders("getLoanScheduleByIdResponse")
-				.to("direct:choiceRoute")
-
-				//add transformation here
-				//end add for extension list
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/getPartiesResponse.ds"))
 				.setBody(simple("${body.content}"))
 				.removeHeaders("getClientByIdResponse")
+
+				//Start for Extension List
+				.setHeader("mfiName", simple("{{dfsp.name}}"))
+				.setHeader("idType", simple("${header.idType}"))
+				.setHeader("idValue", simple("${header.idValue}"))
+				//.setHeader("requestAmount", simple("${body.getAmount()}"))
+				.process(trimMFICode)
+				.setProperty("origPayload", simple("${body}"))
+
+				// Fetch the loan account by ID so we can find customer ID
+				.to("direct:getLoanById")
+
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/getPartyExtensionList.ds"))
+				.setBody(simple("${body.content}"))
+
+				.removeHeaders("getLoanByIdResponse")
+				.removeHeaders("getLoanScheduleByIdResponse")
+				.to("direct:choicePartyRoute")
+				//End for Extension List
 				/*
 				 * END processing
 				 */
@@ -102,7 +104,6 @@ public class PartiesRouter extends RouteBuilder {
 				.setHeader(Exchange.HTTP_METHOD, constant("GET"))
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
-
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getClientByLoanId', " +
 						"'Tracking the request', 'Track the response', " +
@@ -114,6 +115,7 @@ public class PartiesRouter extends RouteBuilder {
 						"'Response from Mambu API, getClientByLoanId: ${body}', " +
 						"'Tracking the response', 'Verify the response', null)")
 				// Save response as property to use later
+				.log("Body is ${body}")
 				.setProperty("getClientByIdResponse", body())
 		;
 
@@ -126,6 +128,7 @@ public class PartiesRouter extends RouteBuilder {
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/postLoanSearchRequest.ds"))
 				.setBody(simple("${body.content}"))
+
 				.marshal().json()
 
 				.removeHeaders("CamelHttp*")
@@ -135,7 +138,6 @@ public class PartiesRouter extends RouteBuilder {
 				.setHeader(Exchange.HTTP_METHOD, constant("POST"))
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
-
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getLoanById', " +
 						"'Tracking the request', 'Track the response', " +
@@ -158,6 +160,39 @@ public class PartiesRouter extends RouteBuilder {
 				.setBody(simple("${body.content}"))
 				// Save response as property to use later
 				.setProperty("getLoanByIdResponse", body())
+		;
+
+		from("direct:choicePartyRoute")
+				.choice()
+				.when(simple("${body?.get('extensionList')[1].get('value')} == '0'"))
+				.to("direct:getPartyLoanScheduleById")
+				.endChoice()
+		;
+
+		from("direct:getPartyLoanScheduleById")
+				.routeId("getPartyLoanScheduleById")
+				.setBody(simple("{}"))
+
+				.removeHeaders("CamelHttp*")
+				.setHeader("detailsLevel", constant("Basic"))
+				.setHeader("Content-Type", constant("application/json"))
+				.setHeader("Accept", constant("application/vnd.mambu.v2+json"))
+				.setHeader(Exchange.HTTP_METHOD, constant("GET"))
+				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
+				.process(encodeAuthHeader)
+				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+						"'Calling Mambu API, getLoanScheduleById', " +
+						"'Tracking the request', 'Track the response', " +
+						"'Request sent to, GET {{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule')")
+				.toD("{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/schedule")
+
+				.unmarshal().json()
+				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+						"'Response from Mambu API, getLoanScheduleById: ${body}', " +
+						"'Tracking the response', 'Verify the response', null)")
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/postPartyrequestsResponseFromSchedule.ds"))
+				.setBody(simple("${body.content}"))
 		;
 	}
 }

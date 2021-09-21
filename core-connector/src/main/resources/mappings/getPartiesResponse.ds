@@ -3,8 +3,7 @@ local getClientByIdResponse = cml.exchangeProperty('getClientByIdResponse');
 local formatDate(dateStr) = DS.ZonedDateTime.format(dateStr, "yyyy-MM-dd'T'HH:mm:ssZ", "yyyy-MM-dd");
 
 {
-   name: "TEST",
-  type: "CONSUMER",
+   type: "CONSUMER",
   idType: cml.header('idType'),
   idValue: cml.header('idValue'),
   [if (std.objectHas(getClientByIdResponse, "firstName") && getClientByIdResponse.firstName != null)

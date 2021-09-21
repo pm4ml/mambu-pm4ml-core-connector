@@ -59,6 +59,9 @@ public class QuotesRouter extends RouteBuilder {
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponse.ds"))
 				.setBody(simple("${body.content}"))
+
+
+
 				.removeHeaders("getLoanByIdResponse")
 				.removeHeaders("getLoanScheduleByIdResponse")
 				.to("direct:choiceRoute")
@@ -96,7 +99,6 @@ public class QuotesRouter extends RouteBuilder {
 				.setHeader(Exchange.HTTP_METHOD, constant("GET"))
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
-
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getLoanScheduleById', " +
 						"'Tracking the request', 'Track the response', " +
@@ -107,7 +109,6 @@ public class QuotesRouter extends RouteBuilder {
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Response from Mambu API, getLoanScheduleById: ${body}', " +
 						"'Tracking the response', 'Verify the response', null)")
-
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/postQuoterequestsResponseFromSchedule.ds"))
 				.setBody(simple("${body.content}"))
