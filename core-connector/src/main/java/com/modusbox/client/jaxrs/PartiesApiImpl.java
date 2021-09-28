@@ -11,4 +11,9 @@ public class PartiesApiImpl implements PartiesApi {
     public TransferPartyInbound getPartiesByIdTypeIdValue(String idType, @Size(min = 1, max = 128) String idValue) {
         return null;
     }
+
+    @Override
+    public TransferPartyInbound getPartiesByIdTypeIdValueIdSubValue(String idType, String idValue, String idSubValue) {
+        return null;
+    }
 }
