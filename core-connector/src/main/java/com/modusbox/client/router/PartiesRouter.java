@@ -6,6 +6,7 @@ import com.modusbox.client.processor.EncodeAuthHeader;
 import com.modusbox.client.processor.TrimMFICode;
 import com.modusbox.client.validator.AccountNumberFormatValidator;
 import com.modusbox.client.validator.GetPartyResponseValidator;
+import com.modusbox.client.validator.IdSubValueChecker;
 import com.modusbox.client.validator.PhoneNumberValidation;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
@@ -21,6 +22,7 @@ public class PartiesRouter extends RouteBuilder {
 	private final GetPartyResponseValidator getPartyResponseValidator = new GetPartyResponseValidator();
 	private final RouteExceptionHandlingConfigurer exceptionHandlingConfigurer = new RouteExceptionHandlingConfigurer();
 
+	private final IdSubValueChecker idSubValueChecker = new IdSubValueChecker();
 	private final PhoneNumberValidation phoneNumberValidation = new PhoneNumberValidation();
 	private static final String TIMER_NAME = "histogram_get_parties_timer";
 
@@ -39,8 +41,32 @@ public class PartiesRouter extends RouteBuilder {
 		// Add our global exception handling strategy
 		exceptionHandlingConfigurer.configureExceptionHandling(this);
 
+		from("direct:getPartiesByIdTypeIdValue").routeId("com.modusbox.getPartiesByIdTypeIdValue").doTry()
+				.process(exchange -> {
+					reqCounter.inc(1); // increment Prometheus Counter metric
+					exchange.setProperty(TIMER_NAME, reqLatency.startTimer()); // initiate Prometheus Histogram metric
+				})
+
+				.to("bean:customJsonMessage?method=logJsonMessage(" +
+						"'info', " +
+						"${header.X-CorrelationId}, " +
+						"'Request received GET /parties/${header.idType}/${header.idValue}', " +
+						"'Tracking the request', " +
+						"'Call the Finflux AP mI,  Track the response', " +
+						"'Input Payload: ${body}')") // default logger
+				/*
+				 * BEGIN processing
+				 */
+				.process(idSubValueChecker)
+
+				.doCatch(CCCustomException.class)
+					.to("direct:extractCustomErrors")
+				.doFinally().process(exchange -> {
+					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
+				}).end()
+		;
 		// In this case the GET parties will return the loan account with client details
-		from("direct:getPartiesByIdTypeIdValueIdSubValue").routeId("com.modusbox.getPartiesByIdTypeIdValue").doTry()
+		from("direct:getPartiesByIdTypeIdValueIdSubValue").routeId("com.modusbox.getPartiesByIdTypeIdValueIdSubValue").doTry()
 				.process(exchange -> {
 					reqCounter.inc(1); // increment Prometheus Counter metric
 					exchange.setProperty(TIMER_NAME, reqLatency.startTimer()); // initiate Prometheus Histogram metric
