@@ -52,7 +52,7 @@ public class PartiesRouter extends RouteBuilder {
 						"${header.X-CorrelationId}, " +
 						"'Request received GET /parties/${header.idType}/${header.idValue}', " +
 						"'Tracking the request', " +
-						"'Call the Finflux AP mI,  Track the response', " +
+						"'Call the Mambu API,  Track the response', " +
 						"'Input Payload: ${body}')") // default logger
 				/*
 				 * BEGIN processing
