@@ -30,7 +30,6 @@ public class CustomErrorProcessor implements Processor {
         JSONObject errorResponse = null;
 
         boolean errorFlag = false;
-        boolean isGenerateExtensionList = false;
 
         String errorDescription = "Downstream API failed.";
         // The exception may be in 1 of 2 places
@@ -52,22 +51,20 @@ public class CustomErrorProcessor implements Processor {
                             errorDescription = respObject.getString("returnStatus");
                         }
                         if(e.getStatusCode() == 404 && statusCode.equals("301")) {
-                            isGenerateExtensionList = true;
-                            httpResponseCode = 200;
-                            reasonText = "{\"idType\": \"" + (String) exchange.getIn().getHeader("idType") +
-                                    "\",\"idValue\": \"" + (String) exchange.getIn().getHeader("idValue") +
-                                    "\",\"idSubValue\": \"" + (String) exchange.getIn().getHeader("idSubValue") +
-                                    "\",\"extensionList\": [{\"key\": \"errorMessage\",\"value\": \"" + errorDescription +
-                                    "\"}]}";
+                            errorFlag = true;
+                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND));
                         }
                     }
                 } finally {
-                    if(!isGenerateExtensionList) {
-                        reasonText = "{ \"statusCode\": \"" + statusCode + "\"," +
-                                "\"message\": \"" + errorDescription + "\"} ";
+                    if (errorFlag) {
+                        httpResponseCode = errorResponse.getInt("errorCode");
+                        errorResponse = errorResponse.getJSONObject("errorInformation");
+                        statusCode = String.valueOf(errorResponse.getInt("statusCode"));
+                        errorDescription = errorResponse.getString("description");
                     }
+                    reasonText = "{ \"statusCode\": \"" + statusCode + "\"," +
+                            "\"message\": \"" + errorDescription + "\"} ";
                 }
-
             } else {
                 try {
                     if(exception instanceof CCCustomException) {
