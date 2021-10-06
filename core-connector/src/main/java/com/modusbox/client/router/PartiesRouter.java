@@ -102,10 +102,9 @@ public class PartiesRouter extends RouteBuilder {
 				.setProperty("origPayload", simple("${body}"))
 
 				// Fetch the loan account by ID so we can find customer ID
-				.to("direct:getLoanById")
+				.to("direct:getExtensionList")
 
 				//.process(getPartyResponseValidator)
-
 				.process(phoneNumberValidation)
 
 				.marshal().json()
@@ -150,9 +149,7 @@ public class PartiesRouter extends RouteBuilder {
 						"'Calling Mambu API, getClientByLoanId', " +
 						"'Tracking the request', 'Track the response', " +
 						"'Request sent to, GET {{dfsp.host}}/clients/${header.idValueTrimmed}')")
-
 				.toD("{{dfsp.host}}/clients/${header.idValueTrimmed}")
-
 				.unmarshal().json()
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Response from Mambu API, getClientByLoanId: ${body}', " +
@@ -190,7 +187,6 @@ public class PartiesRouter extends RouteBuilder {
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Response from Mambu API, getLoanById: ${body}', " +
 						"'Tracking the response', 'Verify the response', null)")
-
 				.choice()
 					.when(simple("${body.size} == 0"))
 						.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
@@ -203,6 +199,55 @@ public class PartiesRouter extends RouteBuilder {
 				.setBody(simple("${body.content}"))
 				// Save response as property to use later
 				.setProperty("getLoanByIdResponse", body())
+		;
+
+		from("direct:getExtensionList")
+				.routeId("getExtensionList")
+				.log("Get loan account by ID route called")
+				.setBody(simple("{}"))
+
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/postLoanSearchRequest.ds"))
+				.setBody(simple("${body.content}"))
+
+				.marshal().json()
+
+				.removeHeaders("CamelHttp*")
+				.setHeader("detailsLevel", constant("Full"))
+				.setHeader("Content-Type", constant("application/json"))
+				.setHeader("Accept", constant("application//vnd.mambu.v2+json"))
+				.setHeader(Exchange.HTTP_METHOD, constant("POST"))
+				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
+				.process(encodeAuthHeader)
+				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+						"'Calling Mambu API, getLoanById', " +
+						"'Tracking the request', 'Track the response', " +
+						"'Request sent to, POST {{dfsp.host}}/loans/search')")
+				.toD("{{dfsp.host}}/loans/search")
+				.unmarshal().json()
+
+				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+						"'Response from Mambu API, getLoanById: ${body}', " +
+						"'Tracking the response', 'Verify the response', null)")
+				.choice()
+					.when(simple("${body.size} == 0"))
+
+
+						.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+						.setBody(simple("{ \"statusCode\": \"3203\"," +
+								"\"message\": \"No data found\"} "))
+						.to("direct:extensionListChecker")
+				.end()
+				.marshal().json()
+				.transform(datasonnet("resource:classpath:mappings/getLoanByIdResponse.ds"))
+				.setBody(simple("${body.content}"))
+				// Save response as property to use later
+
+				.setProperty("getLoanByIdResponse", body())
+		;
+
+		from("direct:extensionListChecker")
+				.process(getPartyResponseValidator)
 		;
 
 		from("direct:choicePartyRoute")

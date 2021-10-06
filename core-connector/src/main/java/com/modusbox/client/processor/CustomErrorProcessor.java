@@ -1,6 +1,7 @@
 package com.modusbox.client.processor;
 
 import com.modusbox.client.customexception.CCCustomException;
+import com.modusbox.client.customexception.WrittenOffAccountException;
 import com.modusbox.client.enums.ErrorCode;
 import com.modusbox.log4j2.message.CustomJsonMessage;
 import com.modusbox.log4j2.message.CustomJsonMessageImpl;
@@ -62,12 +63,18 @@ public class CustomErrorProcessor implements Processor {
                         }
                     }
                 } finally {
-                    if(!isGenerateExtensionList) {
+                    if (!isGenerateExtensionList) {
                         reasonText = "{ \"statusCode\": \"" + statusCode + "\"," +
                                 "\"message\": \"" + errorDescription + "\"} ";
                     }
                 }
-
+            } else if(exception instanceof WrittenOffAccountException) {
+                httpResponseCode = 200;
+                reasonText = "{\"idType\": \"" + (String) exchange.getIn().getHeader("idType") +
+                        "\",\"idValue\": \"" + (String) exchange.getIn().getHeader("idValue") +
+                        "\",\"idSubValue\": \"" + (String) exchange.getIn().getHeader("idSubValue") +
+                        "\",\"extensionList\": [{\"key\": \"errorMessage\",\"value\": \"" + exception.getMessage() +
+                        "\"}]}";
             } else {
                 try {
                     if(exception instanceof CCCustomException) {
