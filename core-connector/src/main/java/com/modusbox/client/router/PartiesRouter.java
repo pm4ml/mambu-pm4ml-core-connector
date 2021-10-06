@@ -233,10 +233,8 @@ public class PartiesRouter extends RouteBuilder {
 					.when(simple("${body.size} == 0"))
 
 
-						.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
-						.setBody(simple("{ \"statusCode\": \"3203\"," +
-								"\"message\": \"No data found\"} "))
-						.to("direct:extensionListChecker")
+						.process(getPartyResponseValidator)
+
 				.end()
 				.marshal().json()
 				.transform(datasonnet("resource:classpath:mappings/getLoanByIdResponse.ds"))
