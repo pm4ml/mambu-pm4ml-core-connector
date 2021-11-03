@@ -8,11 +8,13 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.http.base.HttpOperationFailedException;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.net.SocketTimeoutException;
+import java.util.stream.*;
 
 @Component("customErrorProcessor")
 public class CustomErrorProcessor implements Processor {
@@ -53,6 +55,21 @@ public class CustomErrorProcessor implements Processor {
                         if(e.getStatusCode() == 404 && statusCode.equals("301")) {
                             errorFlag = true;
                             errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND));
+                        }
+                        if (respObject.has("errors")) {
+                            JSONArray jsonArray = respObject.getJSONArray("errors");
+                            statusCode = String.valueOf(IntStream.range(0, jsonArray.length())
+                                    .mapToObj(index -> ((JSONObject)jsonArray.get(index)).optString("errorCode"))
+                                    .collect(Collectors.toList()));
+                            errorDescription = String.valueOf(IntStream.range(0, jsonArray.length())
+                                    .mapToObj(index -> ((JSONObject)jsonArray.get(index)).optString("errorReason"))
+                                    .collect(Collectors.toList()));
+                            statusCode = statusCode.substring(1,statusCode.length()-1);
+                            errorDescription = errorDescription.substring(1,errorDescription.length()-1);
+                            if(statusCode.equals("110")) {
+                                errorFlag = true;
+                                errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.PAYEE_LIMIT_ERROR,errorDescription));
+                            }
                         }
                     }
                 } finally {
