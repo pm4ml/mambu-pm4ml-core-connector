@@ -58,14 +58,9 @@ public class CustomErrorProcessor implements Processor {
                         }
                         if (respObject.has("errors")) {
                             JSONArray jsonArray = respObject.getJSONArray("errors");
-                            statusCode = String.valueOf(IntStream.range(0, jsonArray.length())
-                                    .mapToObj(index -> ((JSONObject)jsonArray.get(index)).optString("errorCode"))
-                                    .collect(Collectors.toList()));
-                            errorDescription = String.valueOf(IntStream.range(0, jsonArray.length())
-                                    .mapToObj(index -> ((JSONObject)jsonArray.get(index)).optString("errorReason"))
-                                    .collect(Collectors.toList()));
-                            statusCode = statusCode.substring(1,statusCode.length()-1);
-                            errorDescription = errorDescription.substring(1,errorDescription.length()-1);
+                            JSONObject errorObject = (JSONObject)jsonArray.get(0);
+                            statusCode = String.valueOf(errorObject.getInt("errorCode"));
+                            errorDescription = errorObject.getString("errorReason");
                             if(statusCode.equals("110")) {
                                 errorFlag = true;
                                 errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.PAYEE_LIMIT_ERROR,errorDescription));

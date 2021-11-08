@@ -129,52 +129,6 @@ public class TransfersRouter extends RouteBuilder {
                 /*
                  * BEGIN processing
                  */
-//                .marshal().json()
-//                .transform(datasonnet("resource:classpath:mappings/putTransfersRequest.ds"))
-//                .setBody(simple("${body.content}"))
-//
-//                .setHeader("idValue", simple("${body?.get('accountId')}"))
-//                .setHeader("amount", simple("${body?.get('amount')}"))
-//                .process(trimMFICode)
-//
-//                // Fetch the loan account by ID so we can find customer ID
-//                .to("direct:getLoanById")
-//
-//                .marshal().json()
-//                .transform(datasonnet("resource:classpath:mappings/postTransactionRequest.ds"))
-//                .setBody(simple("${body.content}"))
-//                .marshal().json()
-//
-//                .removeHeaders("CamelHttp*")
-//                .setHeader("Content-Type", constant("application/json"))
-//                .setHeader("Accept", constant("application/vnd.mambu.v2+json"))
-//                .setHeader(Exchange.HTTP_METHOD, constant("POST"))
-//                .setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
-//                .process(encodeAuthHeader)
-//
-//                .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-//                        "'Calling Mambu API, postTransaction, " +
-//                           "POST {{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ', " +
-//                        "'Tracking the request', 'Track the response', 'Input Payload: ${body}')")
-//                .toD("{{dfsp.host}}/loans/${exchangeProperty.getLoanByIdResponse[0]?.get('id')}/repayment-transactions ")
-//                .to("bean:customJsonMessage?method=logJsonMessage(" +
-//                        "'info', " +
-//                        "${header.X-CorrelationId}, " +
-//                        "'Response from Mambu API, postTransaction: ${body}', " +
-//                        "'Tracking the response', " +
-//                        "'Verify the response', null)")
-//                .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(200))
-//                .setBody(constant(""))
-//                /*
-//                 * END processing
-//                 */
-//                .to("bean:customJsonMessage?method=logJsonMessage(" +
-//                        "'info', " +
-//                        "${header.X-CorrelationId}, " +
-//                        "'Response for PUT /transfers/${header.transferId}', " +
-//                        "'Tracking the response', " +
-//                        "null, " +
-//                        "'Output Payload: ${body}')") // default logger
                 .doFinally().process(exchange -> {
                     ((Histogram.Timer) exchange.getProperty(TIMER_NAME_PUT)).observeDuration(); // stop Prometheus Histogram metric
                 }).end()
