@@ -8,6 +8,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
 import org.apache.camel.http.base.HttpOperationFailedException;
 import org.apache.http.conn.ConnectTimeoutException;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
@@ -53,6 +54,16 @@ public class CustomErrorProcessor implements Processor {
                         if(e.getStatusCode() == 404 && statusCode.equals("301")) {
                             errorFlag = true;
                             errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND));
+                        }
+                        if (respObject.has("errors")) {
+                            JSONArray jsonArray = respObject.getJSONArray("errors");
+                            JSONObject errorObject = (JSONObject)jsonArray.get(0);
+                            statusCode = String.valueOf(errorObject.getInt("errorCode"));
+                            errorDescription = errorObject.getString("errorReason");
+                            if(statusCode.equals("110")) {
+                                errorFlag = true;
+                                errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.PAYEE_LIMIT_ERROR,errorDescription));
+                            }
                         }
                     }
                 } finally {
