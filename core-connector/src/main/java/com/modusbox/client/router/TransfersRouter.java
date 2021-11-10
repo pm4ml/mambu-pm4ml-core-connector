@@ -8,6 +8,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
+import org.apache.camel.http.base.HttpOperationFailedException;
 
 
 public class TransfersRouter extends RouteBuilder {
@@ -107,7 +108,7 @@ public class TransfersRouter extends RouteBuilder {
                         "'Tracking the response', " +
                         "null, " +
                         "'Output Payload: ${body}')") // default logger
-                .doCatch(CCCustomException.class)
+                .doCatch(CCCustomException.class, HttpOperationFailedException.class)
                     .to("direct:extractCustomErrors")
                 .doFinally().process(exchange -> {
                     ((Histogram.Timer) exchange.getProperty(TIMER_NAME_POST)).observeDuration(); // stop Prometheus Histogram metric

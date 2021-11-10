@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 
 import javax.ws.rs.InternalServerErrorException;
 import java.net.SocketTimeoutException;
-import java.util.stream.*;
 
 @Component("customErrorProcessor")
 public class CustomErrorProcessor implements Processor {

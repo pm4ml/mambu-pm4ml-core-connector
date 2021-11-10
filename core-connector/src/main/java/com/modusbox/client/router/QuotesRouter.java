@@ -3,6 +3,7 @@ package com.modusbox.client.router;
 import com.modusbox.client.exception.RouteExceptionHandlingConfigurer;
 import com.modusbox.client.processor.EncodeAuthHeader;
 import com.modusbox.client.processor.TrimMFICode;
+import com.modusbox.client.validator.DataValidator;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import io.prometheus.client.Counter;
@@ -50,6 +51,7 @@ public class QuotesRouter extends RouteBuilder {
 				.setHeader("idType", simple("${body.getTo().getIdType()}"))
 				.setHeader("idValue", simple("${body.getTo().getIdValue()}"))
 				.setHeader("requestAmount", simple("${body.getAmount()}"))
+				.bean(DataValidator.class, "validateZeroAmount("+simple("${body.getAmount()}")+")")
 				.process(trimMFICode)
 				.setProperty("origPayload", simple("${body}"))
 
