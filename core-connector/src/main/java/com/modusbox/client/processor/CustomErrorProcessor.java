@@ -53,7 +53,7 @@ public class CustomErrorProcessor implements Processor {
                         }
                         if(e.getStatusCode() == 404 && statusCode.equals("301")) {
                             errorFlag = true;
-                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND));
+                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND,errorDescription));
                         }
                         if (respObject.has("errors")) {
                             JSONArray jsonArray = respObject.getJSONArray("errors");
