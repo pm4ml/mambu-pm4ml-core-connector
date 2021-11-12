@@ -98,7 +98,7 @@ public class PartiesRouter extends RouteBuilder {
 				.setHeader("idType", simple("${header.idType}"))
 				.setHeader("idValue", simple("${header.idValue}"))
 				//.setHeader("requestAmount", simple("${body.getAmount()}"))
-				.process(trimMFICode)
+//				.process(trimMFICode)
 				.setProperty("origPayload", simple("${body}"))
 
 				// Fetch the loan account by ID so we can find customer ID

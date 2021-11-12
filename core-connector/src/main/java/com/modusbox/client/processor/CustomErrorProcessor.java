@@ -78,13 +78,23 @@ public class CustomErrorProcessor implements Processor {
                 }
             } else {
                 try {
-                    if(exception instanceof CCCustomException) {
+                    if(exception instanceof CCCustomException)
+                    {
                         errorResponse = new JSONObject(exception.getMessage());
-                    } else if(exception instanceof InternalServerErrorException) {
+                    }
+                    else if(exception instanceof InternalServerErrorException)
+                    {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR));
-                    } else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException) {
+                    }
+                    else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException)
+                    {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.SERVER_TIMED_OUT));
                     }
+                    else
+                    {
+                        errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_DOWNSTREAM_ERROR_PAYEE,"Generic error due to the Payee or Payee FSP."));
+                    }
+
                 } finally {
                     httpResponseCode = errorResponse.getInt("errorCode");
                     errorResponse = errorResponse.getJSONObject("errorInformation");

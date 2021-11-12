@@ -8,7 +8,7 @@ info:
   license:
     name: Apache License Version 2.0, January 2004
     url: http://www.apache.org/licenses/
-  version: 1.7.0
+  version: 1.8.0
 
 
 paths:
@@ -702,10 +702,10 @@ components:
           $ref: '#/components/schemas/transactionId'
           description: Identifier for the transaction, decided by the Payer FSP during the creation of the quote.
         payer:
-          $ref: '#/components/schemas/transferPartyInbound'
+          $ref: '#/components/schemas/Party'
           description: Information about the Payer in the proposed financial transaction.
         payee:
-          $ref: '#/components/schemas/transferPartyInbound'
+          $ref: '#/components/schemas/Party'
           description: Information about the Payee in the proposed financial transaction.
         amount:
           $ref: '#/components/schemas/amountCurrency'
@@ -1449,7 +1449,9 @@ components:
         from:
           $ref: '#/components/schemas/transferParty'
         to:
-          $ref: '#/components/schemas/transferParty'
+          type: array
+          items:
+            $ref: '#/components/schemas/transferParty'
         #          oneOf:
         #            - $ref: '#/components/schemas/transferParty'
         #            - type: array
