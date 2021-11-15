@@ -56,12 +56,14 @@ local extensionList = std.filter(function(item) item != null, [
 type: "CONSUMER",
   idType: cml.header('idType'),
   idValue: cml.header('idValue'),
+  idSubValue: cml.header('idSubValue'),
   [if (std.objectHas(getClientByIdResponse, "firstName") && getClientByIdResponse.firstName != null)
    then "firstName"]: getClientByIdResponse.firstName,
   [if (std.objectHas(getClientByIdResponse, "lastName") && getClientByIdResponse.lastName != null)
    then "lastName"]: getClientByIdResponse.lastName,
-  [if (std.objectHas(getClientByIdResponse, "birthDate") && getClientByIdResponse.birthDate != null)
-   then "dateOfBirth"]: formatDate(getClientByIdResponse.birthDate),
+  [if (std.objectHas(getClientByIdResponse, "firstName") && getClientByIdResponse.firstName != null) &&
+  (std.objectHas(getClientByIdResponse, "lastName") && getClientByIdResponse.lastName != null)
+  then "displayName"]:getClientByIdResponse.firstName +" "+ getClientByIdResponse.lastName,
   [if (extensionList != [])
    then "extensionList"]: extensionList
 }

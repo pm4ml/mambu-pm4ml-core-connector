@@ -6,6 +6,7 @@ import com.modusbox.log4j2.message.CustomJsonMessage;
 import com.modusbox.log4j2.message.CustomJsonMessageImpl;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.http.base.HttpOperationFailedException;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.json.JSONArray;
@@ -64,6 +65,10 @@ public class CustomErrorProcessor implements Processor {
                                 errorFlag = true;
                                 errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.PAYEE_LIMIT_ERROR,errorDescription));
                             }
+                            else if(statusCode.equals("4")){
+                                errorFlag = true;
+                                errorResponse= new JSONObject(ErrorCode.getErrorResponse(ErrorCode.MISSING_MANDATORY_ELEMENT,errorDescription));
+                            }
                         }
                     }
                 } finally {
@@ -89,6 +94,10 @@ public class CustomErrorProcessor implements Processor {
                     else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException)
                     {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.SERVER_TIMED_OUT));
+                    }
+                    else if (exception instanceof java.lang.Exception || exception instanceof BeanValidationException)
+                    {
+                        errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, "CC logical transformation error"));
                     }
                     else
                     {
