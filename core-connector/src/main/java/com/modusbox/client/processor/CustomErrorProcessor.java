@@ -6,6 +6,7 @@ import com.modusbox.log4j2.message.CustomJsonMessage;
 import com.modusbox.log4j2.message.CustomJsonMessageImpl;
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
+import org.apache.camel.component.bean.validator.BeanValidationException;
 import org.apache.camel.http.base.HttpOperationFailedException;
 import org.apache.http.conn.ConnectTimeoutException;
 import org.json.JSONArray;
@@ -53,7 +54,7 @@ public class CustomErrorProcessor implements Processor {
                         }
                         if(e.getStatusCode() == 404 && statusCode.equals("301")) {
                             errorFlag = true;
-                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND));
+                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND,errorDescription));
                         }
                         if (respObject.has("errors")) {
                             JSONArray jsonArray = respObject.getJSONArray("errors");
@@ -63,6 +64,10 @@ public class CustomErrorProcessor implements Processor {
                             if(statusCode.equals("110")) {
                                 errorFlag = true;
                                 errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.PAYEE_LIMIT_ERROR,errorDescription));
+                            }
+                            else if(statusCode.equals("4")){
+                                errorFlag = true;
+                                errorResponse= new JSONObject(ErrorCode.getErrorResponse(ErrorCode.MISSING_MANDATORY_ELEMENT,errorDescription));
                             }
                         }
                     }
@@ -78,13 +83,27 @@ public class CustomErrorProcessor implements Processor {
                 }
             } else {
                 try {
-                    if(exception instanceof CCCustomException) {
+                    if(exception instanceof CCCustomException)
+                    {
                         errorResponse = new JSONObject(exception.getMessage());
-                    } else if(exception instanceof InternalServerErrorException) {
+                    }
+                    else if(exception instanceof InternalServerErrorException)
+                    {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR));
-                    } else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException) {
+                    }
+                    else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException)
+                    {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.SERVER_TIMED_OUT));
                     }
+                    else if (exception instanceof java.lang.Exception || exception instanceof BeanValidationException)
+                    {
+                        errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, "CC logical transformation error"));
+                    }
+                    else
+                    {
+                        errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_DOWNSTREAM_ERROR_PAYEE,"Generic error due to the Payee or Payee FSP."));
+                    }
+
                 } finally {
                     httpResponseCode = errorResponse.getInt("errorCode");
                     errorResponse = errorResponse.getJSONObject("errorInformation");

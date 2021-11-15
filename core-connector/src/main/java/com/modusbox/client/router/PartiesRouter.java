@@ -12,6 +12,7 @@ import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
+import org.apache.camel.http.base.HttpOperationFailedException;
 
 
 public class PartiesRouter extends RouteBuilder {
@@ -97,8 +98,7 @@ public class PartiesRouter extends RouteBuilder {
 				.setHeader("mfiName", simple("{{dfsp.name}}"))
 				.setHeader("idType", simple("${header.idType}"))
 				.setHeader("idValue", simple("${header.idValue}"))
-				//.setHeader("requestAmount", simple("${body.getAmount()}"))
-				.process(trimMFICode)
+
 				.setProperty("origPayload", simple("${body}"))
 
 				// Fetch the loan account by ID so we can find customer ID
@@ -125,7 +125,7 @@ public class PartiesRouter extends RouteBuilder {
 						"'Tracking the response', " +
 						"null, " +
 						"'Output Payload: ${body}')") // default logger
-				.doCatch(CCCustomException.class)
+				.doCatch(CCCustomException.class, HttpOperationFailedException.class)
 					.to("direct:extractCustomErrors")
 				.doFinally().process(exchange -> {
 					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
@@ -146,13 +146,13 @@ public class PartiesRouter extends RouteBuilder {
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Calling Mambu API, getClientByLoanId', " +
+						"'Calling Mambu API, getClientById', " +
 						"'Tracking the request', 'Track the response', " +
 						"'Request sent to, GET {{dfsp.host}}/clients/${header.idValueTrimmed}')")
 				.toD("{{dfsp.host}}/clients/${header.idValueTrimmed}")
 				.unmarshal().json()
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Response from Mambu API, getClientByLoanId: ${body}', " +
+						"'Response from Mambu API, getClientById: ${body}', " +
 						"'Tracking the response', 'Verify the response', null)")
 				// Save response as property to use later
 				.setProperty("getClientByIdResponse", body())
@@ -173,15 +173,15 @@ public class PartiesRouter extends RouteBuilder {
 				.removeHeaders("CamelHttp*")
 				.setHeader("detailsLevel", constant("Full"))
 				.setHeader("Content-Type", constant("application/json"))
-				.setHeader("Accept", constant("application//vnd.mambu.v2+json"))
+				.setHeader("Accept", constant("application/vnd.mambu.v2+json"))
 				.setHeader(Exchange.HTTP_METHOD, constant("POST"))
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
 						"'Calling Mambu API, getLoanById', " +
 						"'Tracking the request', 'Track the response', " +
-						"'Request sent to, POST {{dfsp.host}}/loans/search')")
-				.toD("{{dfsp.host}}/loans/search")
+						"'Request sent to, POST {{dfsp.host}}/loans:search')")
+				.toD("{{dfsp.host}}/loans:search")
 				.unmarshal().json()
 
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
@@ -215,19 +215,19 @@ public class PartiesRouter extends RouteBuilder {
 				.removeHeaders("CamelHttp*")
 				.setHeader("detailsLevel", constant("Full"))
 				.setHeader("Content-Type", constant("application/json"))
-				.setHeader("Accept", constant("application//vnd.mambu.v2+json"))
+				.setHeader("Accept", constant("application/vnd.mambu.v2+json"))
 				.setHeader(Exchange.HTTP_METHOD, constant("POST"))
 				.setProperty("authHeader", simple("${properties:dfsp.username}:${properties:dfsp.password}"))
 				.process(encodeAuthHeader)
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Calling Mambu API, getLoanById', " +
+						"'Calling Mambu API, getExtensionList', " +
 						"'Tracking the request', 'Track the response', " +
-						"'Request sent to, POST {{dfsp.host}}/loans/search')")
-				.toD("{{dfsp.host}}/loans/search")
+						"'Request sent to, POST {{dfsp.host}}/loans:search')")
+				.toD("{{dfsp.host}}/loans:search")
 				.unmarshal().json()
 
 				.to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-						"'Response from Mambu API, getLoanById: ${body}', " +
+						"'Response from Mambu API, getExtensionList: ${body}', " +
 						"'Tracking the response', 'Verify the response', null)")
 				.choice()
 					.when(simple("${body.size} == 0"))
