@@ -33,8 +33,10 @@ local amountDue = if (partiallyPaidInstallments != [])
                   else
                     "0";
 
-local dueDate = if (pendingInstallments != [])
-                then std.substr(pendingInstallments[0].dueDate, 0, 10)
+local dueDate = if (partiallyPaidInstallments != [])
+                    then std.substr(partiallyPaidInstallments[0].dueDate, 0, 10)
+                else if (pendingInstallments != [])
+                    then std.substr(pendingInstallments[0].dueDate, 0, 10)
                 else "";
 
 local extensionList = std.filter(function(item) item != null, [
