@@ -1,0 +1,3 @@
+{
+    "mojaloopTransferState": payload.fulfil.body.transferState
+}

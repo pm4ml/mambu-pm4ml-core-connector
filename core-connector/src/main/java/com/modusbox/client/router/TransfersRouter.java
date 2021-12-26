@@ -10,6 +10,8 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 import org.apache.camel.http.base.HttpOperationFailedException;
 
+import java.net.SocketException;
+
 
 public class TransfersRouter extends RouteBuilder {
 
@@ -19,6 +21,7 @@ public class TransfersRouter extends RouteBuilder {
 
     private static final String TIMER_NAME_POST = "histogram_post_transfers_timer";
     private static final String TIMER_NAME_PUT = "histogram_put_transfers_timer";
+    private static final String TIMER_NAME_GET = "histogram_get_transfers_timer";
 
     public static final Counter reqCounterPost = Counter.build()
             .name("counter_post_transfers_requests_total")
@@ -38,6 +41,16 @@ public class TransfersRouter extends RouteBuilder {
     private static final Histogram reqLatencyPut = Histogram.build()
             .name("histogram_put_transfers_request_latency")
             .help("Request latency in seconds for PUT /transfers.")
+            .register();
+
+    public static final Counter reqCounterGet = Counter.build()
+            .name("counter_get_transfers_requests_total")
+            .help("Total requests for GET /transfers.")
+            .register();
+
+    private static final Histogram reqLatencyGet = Histogram.build()
+            .name("histogram_get_transfers_request_latency")
+            .help("Request latency in seconds for GET /transfers.")
             .register();
 
     public void configure() {
@@ -108,7 +121,7 @@ public class TransfersRouter extends RouteBuilder {
                         "'Tracking the response', " +
                         "null, " +
                         "'Output Payload: ${body}')") // default logger
-                .doCatch(CCCustomException.class, HttpOperationFailedException.class,java.lang.Exception.class)
+                .doCatch(CCCustomException.class, HttpOperationFailedException.class,java.lang.Exception.class, SocketException.class)
                     .to("direct:extractCustomErrors")
                 .doFinally().process(exchange -> {
                     ((Histogram.Timer) exchange.getProperty(TIMER_NAME_POST)).observeDuration(); // stop Prometheus Histogram metric
@@ -132,6 +145,50 @@ public class TransfersRouter extends RouteBuilder {
                  */
                 .doFinally().process(exchange -> {
                     ((Histogram.Timer) exchange.getProperty(TIMER_NAME_PUT)).observeDuration(); // stop Prometheus Histogram metric
+                }).end()
+        ;
+
+        from("direct:getTransfersByTransferId").routeId("com.modusbox.getTransfers").doTry()
+                .process(exchange -> {
+                    reqCounterGet.inc(1); // increment Prometheus Counter metric
+                    exchange.setProperty(TIMER_NAME_GET, reqLatencyGet.startTimer()); // initiate Prometheus Histogram metric
+                })
+                .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+                        "'Request received, GET /transfers/${header.transferId}', " +
+                        "null, null, null)")
+                /*
+                 * BEGIN processing
+                 */
+
+                .removeHeaders("CamelHttp*")
+                .setHeader("Content-Type", constant("application/json"))
+                .setHeader("Accept", constant("application/json"))
+                .setHeader(Exchange.HTTP_METHOD, constant("GET"))
+
+                .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+                        "'Calling Hub API, get transfers, GET {{dfsp.host}}', " +
+                        "'Tracking the request', 'Track the response', 'Input Payload: ${body}')")
+                .toD("{{ml-conn.outbound.host}}/transfers/${header.transferId}?bridgeEndpoint=true&throwExceptionOnFailure=false")
+                .unmarshal().json()
+                .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+                        "'Response from Hub API, get transfers: ${body}', " +
+                        "'Tracking the response', 'Verify the response', null)")
+//                .process(exchange -> System.out.println())
+
+                .marshal().json()
+                .transform(datasonnet("resource:classpath:mappings/getTransfersResponse.ds"))
+                .setBody(simple("${body.content}"))
+                .marshal().json()
+
+                /*
+                 * END processing
+                 */
+                .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
+                        "'Final Response: ${body}', " +
+                        "null, null, 'Response of GET /transfers/${header.transferId} API')")
+
+                .doFinally().process(exchange -> {
+                    ((Histogram.Timer) exchange.getProperty(TIMER_NAME_GET)).observeDuration(); // stop Prometheus Histogram metric
                 }).end()
         ;
 

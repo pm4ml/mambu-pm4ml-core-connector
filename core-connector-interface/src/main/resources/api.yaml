@@ -8,7 +8,7 @@ info:
   license:
     name: Apache License Version 2.0, January 2004
     url: http://www.apache.org/licenses/
-  version: 1.8.0
+  version: 1.8.2
 
 
 paths:
@@ -195,6 +195,27 @@ paths:
           $ref: '#/components/responses/500'
 
   /transfers/{transferId}:
+    get:
+      summary: Requests status relating to a transfer
+      operationId: getTransfersByTransferId
+      description: The HTTP request `GET /transfers/{transferId}` is sent to the Hub by the DFSP, and it is used to look up information regarding the given transfer, identified by `{transferId}`.
+      tags:
+        - transfers
+      parameters:
+        - $ref: '#/components/parameters/transferId'
+      responses:
+        200:
+          description: Response containing status of the requested transfer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/mojaloopTransferState'
+        400:
+          $ref: '#/components/responses/400'
+        404:
+          $ref: '#/components/responses/404'
+        500:
+          $ref: '#/components/responses/500'
     put:
       summary: Provides a notification about the success/failure of a specific transfer
       operationId: putTransfersByTransferId
@@ -1000,7 +1021,7 @@ components:
             any optional Payee fees.
         payeeFspFee:
           $ref: '#/components/schemas/mojaloopMoney'
-          description: Payee FSP’s part of the transaction fee.
+          description: Payee FSP's part of the transaction fee.
         payeeFspCommission:
           $ref: '#/components/schemas/mojaloopMoney'
           description: Transaction commission from the Payee FSP.
@@ -1091,6 +1112,9 @@ components:
         expiration:
           $ref: '#/components/schemas/timestamp'
           description: An optional deadline for responding to the quote request.
+        extensionList:
+          $ref: '#/components/schemas/extensionList'
+          description: Optional extension, specific to deployment.
 
     quoteResponse:
       type: object
@@ -1121,7 +1145,7 @@ components:
           description: The currency of the `payeeReceiveAmount`.
         payeeFspFeeAmount:
           $ref: '#/components/schemas/money'
-          description: Payee FSP’s part of the transaction fee.
+          description: Payee FSP's part of the transaction fee.
         payeeFspFeeAmountCurrency:
           $ref: '#/components/schemas/currency'
           description: The currency of the `payeeFspFeeAmount`.
@@ -1168,7 +1192,7 @@ components:
       description: Below are the allowed values for the enumeration.
 
         - DEPOSIT - Used for performing a Cash-In (deposit) transaction. In a normal scenario, electronic funds are transferred from a Business account to a Consumer account, and physical cash is given from the Consumer to the Business User.
-        - WITHDRAWAL - Used for performing a Cash-Out (withdrawal) transaction. In a normal scenario, electronic funds are transferred from a Consumer’s account to a Business account, and physical cash is given from the Business User to the Consumer.
+        - WITHDRAWAL - Used for performing a Cash-Out (withdrawal) transaction. In a normal scenario, electronic funds are transferred from a Consumer's account to a Business account, and physical cash is given from the Business User to the Consumer.
         - TRANSFER - Used for performing a P2P (Peer to Peer, or Consumer to Consumer) transaction.
         - PAYMENT - Usually used for performing a transaction from a Consumer to a Merchant or Organization, but could also be for a B2B (Business to Business) payment. The transaction could be online for a purchase in an Internet store, in a physical store where both the Consumer and Business User are present, a bill payment, a donation, and so on.
         - REFUND - Used for performing a refund of transaction.
@@ -1431,6 +1455,9 @@ components:
         note:
           maxLength: 128
           type: string
+        extensionList:
+          $ref: '#/components/schemas/extensionList'
+          description: Optional extension, specific to deployment.
 
     transferResponse:
       type: object
@@ -1449,9 +1476,7 @@ components:
         from:
           $ref: '#/components/schemas/transferParty'
         to:
-          type: array
-          items:
-            $ref: '#/components/schemas/transferParty'
+          $ref: '#/components/schemas/transferParty'
         #          oneOf:
         #            - $ref: '#/components/schemas/transferParty'
         #            - type: array
@@ -1583,7 +1608,7 @@ components:
 
     transferResponseInbound:
       type: object
-        #required:
+      #required:
       #- homeTransactionId
       properties:
         homeTransactionId:

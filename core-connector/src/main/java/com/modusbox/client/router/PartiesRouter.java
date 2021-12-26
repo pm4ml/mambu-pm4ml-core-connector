@@ -14,6 +14,8 @@ import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 import org.apache.camel.http.base.HttpOperationFailedException;
 
+import java.net.SocketException;
+
 
 public class PartiesRouter extends RouteBuilder {
 
@@ -60,7 +62,7 @@ public class PartiesRouter extends RouteBuilder {
 				 */
 				.process(idSubValueChecker)
 
-				.doCatch(CCCustomException.class)
+				.doCatch(CCCustomException.class,SocketException.class)
 					.to("direct:extractCustomErrors")
 				.doFinally().process(exchange -> {
 					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
@@ -125,7 +127,7 @@ public class PartiesRouter extends RouteBuilder {
 						"'Tracking the response', " +
 						"null, " +
 						"'Output Payload: ${body}')") // default logger
-				.doCatch(CCCustomException.class, HttpOperationFailedException.class)
+				.doCatch(CCCustomException.class, HttpOperationFailedException.class, SocketException.class)
 					.to("direct:extractCustomErrors")
 				.doFinally().process(exchange -> {
 					((Histogram.Timer) exchange.getProperty(TIMER_NAME)).observeDuration(); // stop Prometheus Histogram metric
