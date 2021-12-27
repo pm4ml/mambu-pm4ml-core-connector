@@ -14,6 +14,7 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Component;
 
 import javax.ws.rs.InternalServerErrorException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 @Component("customErrorProcessor")
@@ -51,12 +52,18 @@ public class CustomErrorProcessor implements Processor {
                         if (respObject.has("returnStatus")) {
                             statusCode = String.valueOf(respObject.getInt("returnCode"));
                             errorDescription = respObject.getString("returnStatus");
+
+                            if(e.getStatusCode() == 404 && statusCode.equals("301")) {
+                                errorFlag = true;
+                                errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND,errorDescription));
+                            }
+                            else
+                            {
+                                errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_DOWNSTREAM_ERROR_PAYEE,"Generic error due to the Payee or Payee FSP."));
+                            }
                         }
-                        if(e.getStatusCode() == 404 && statusCode.equals("301")) {
-                            errorFlag = true;
-                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_ID_NOT_FOUND,errorDescription));
-                        }
-                        if (respObject.has("errors")) {
+
+                        else if (respObject.has("errors")) {
                             JSONArray jsonArray = respObject.getJSONArray("errors");
                             JSONObject errorObject = (JSONObject)jsonArray.get(0);
                             statusCode = String.valueOf(errorObject.getInt("errorCode"));
@@ -69,6 +76,14 @@ public class CustomErrorProcessor implements Processor {
                                 errorFlag = true;
                                 errorResponse= new JSONObject(ErrorCode.getErrorResponse(ErrorCode.MISSING_MANDATORY_ELEMENT,errorDescription));
                             }
+                            else
+                            {
+                                errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_DOWNSTREAM_ERROR_PAYEE,"Generic error due to the Payee or Payee FSP."));
+                            }
+                        }
+                        else
+                        {
+                            errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.GENERIC_DOWNSTREAM_ERROR_PAYEE,"Generic error due to the Payee or Payee FSP."));
                         }
                     }
                 } finally {
@@ -91,7 +106,7 @@ public class CustomErrorProcessor implements Processor {
                     {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR));
                     }
-                    else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException)
+                    else if(exception instanceof ConnectTimeoutException || exception instanceof SocketTimeoutException || exception instanceof SocketException)
                     {
                         errorResponse = new JSONObject(ErrorCode.getErrorResponse(ErrorCode.SERVER_TIMED_OUT));
                     }

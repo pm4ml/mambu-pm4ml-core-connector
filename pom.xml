@@ -108,18 +108,19 @@
 
 
             <!-- logging -->
-            <!--<dependency>
+            <!-- vulnerability in log4j found, need to use only version 2.15.0 or above!!! -->
+            <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-api</artifactId>
-                <version>2.13.0</version>
+                <version>2.17.0</version>
                 <scope>runtime</scope>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
                 <artifactId>log4j-core</artifactId>
-                <version>2.13.0</version>
+                <version>2.17.0</version>
                 <scope>runtime</scope>
-            </dependency>-->
+            </dependency>
 
             <dependency>
                 <groupId>org.apache.camel.springboot</groupId>
