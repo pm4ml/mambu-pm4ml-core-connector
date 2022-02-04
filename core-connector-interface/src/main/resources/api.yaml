@@ -209,7 +209,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/mojaloopTransferState'
+                $ref: '#/components/schemas/transferStatusResponse'
         400:
           $ref: '#/components/responses/400'
         404:
@@ -1637,6 +1637,18 @@ components:
         - WAITING_FOR_PARTY_ACCEPTANCE `AUTO_ACCEPT_PARTY` is set to "false" and party information has been returned, waiting to be accepted by the Payer DFSP using a `PUT /sendmoney/{transferId}` request.
         - WAITING_FOR_QUOTE_ACCEPTANCE `AUTO_ACCEPT_QUOTE` is set to "false" and quote information has been returned, waiting to be accepted by the Payer DFSP using a `PUT /sendmoney/{transferId}` request.
         - COMPLETED The transfer has completed successfully.
+
+    transferStatusResponse:
+      type: object
+      properties:
+        transferId:
+          $ref: '#/components/schemas/mojaloopIdentifier'
+        transferState:
+          $ref: '#/components/schemas/transferStatus'
+        completedTimestamp:
+          $ref: '#/components/schemas/timestamp'
+          description: Time and date when the transaction was completed.
+          example: "2020-05-19T08:38:08.699-04:00"
 
   responses:
     '400':
