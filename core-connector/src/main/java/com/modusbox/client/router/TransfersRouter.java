@@ -9,6 +9,7 @@ import org.apache.camel.builder.RouteBuilder;
 import io.prometheus.client.Counter;
 import io.prometheus.client.Histogram;
 import org.apache.camel.http.base.HttpOperationFailedException;
+import org.json.JSONException;
 
 import java.net.SocketException;
 
@@ -166,7 +167,7 @@ public class TransfersRouter extends RouteBuilder {
                 .setHeader(Exchange.HTTP_METHOD, constant("GET"))
 
                 .to("bean:customJsonMessage?method=logJsonMessage('info', ${header.X-CorrelationId}, " +
-                        "'Calling Hub API, get transfers, GET {{dfsp.host}}', " +
+                        "'Calling Hub API, get transfers, GET {{ml-conn.outbound.host}}', " +
                         "'Tracking the request', 'Track the response', 'Input Payload: ${body}')")
                 .toD("{{ml-conn.outbound.host}}/transfers/${header.transferId}?bridgeEndpoint=true&throwExceptionOnFailure=false")
                 .unmarshal().json()
@@ -175,10 +176,22 @@ public class TransfersRouter extends RouteBuilder {
                         "'Tracking the response', 'Verify the response', null)")
 //                .process(exchange -> System.out.println())
 
+                .choice()
+                .when(simple("${body['statusCode']} != null"))
+//                .process(exchange -> System.out.println())
+                    .to("direct:catchMojaloopError")
+                .endDoTry()
+
+//                .process(exchange -> System.out.println())
+
+                .choice()
+                .when(simple("${body['fulfil']} != null"))
+//                .process(exchange -> System.out.println())            
                 .marshal().json()
                 .transform(datasonnet("resource:classpath:mappings/getTransfersResponse.ds"))
                 .setBody(simple("${body.content}"))
                 .marshal().json()
+                .endDoTry()
 
                 /*
                  * END processing
@@ -187,6 +200,8 @@ public class TransfersRouter extends RouteBuilder {
                         "'Final Response: ${body}', " +
                         "null, null, 'Response of GET /transfers/${header.transferId} API')")
 
+		        .doCatch(CCCustomException.class, HttpOperationFailedException.class, JSONException.class)	
+                    .to("direct:extractCustomErrors")
                 .doFinally().process(exchange -> {
                     ((Histogram.Timer) exchange.getProperty(TIMER_NAME_GET)).observeDuration(); // stop Prometheus Histogram metric
                 }).end()
