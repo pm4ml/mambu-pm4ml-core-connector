@@ -7,7 +7,6 @@ local commissionAmt = if(payload.amount == "1000") then "0" else "10";
   "transactionId": payload.transactionId,
   "transferAmount": transferAmt,
   "transferAmountCurrency": payload.currency,
-  "payeeReceiveAmount": payload.amount,
   "payeeFspFeeAmount": feeAmt,
   "payeeFspFeeAmountCurrency": payload.currency,
   "payeeFspCommissionAmount": commissionAmt,
