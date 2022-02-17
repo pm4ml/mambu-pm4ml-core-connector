@@ -1,11 +1,12 @@
 {
   "quoteId": payload.quoteId,
   "transactionId": payload.transactionId,
-  "transferAmount": payload.amount,
+  "transferAmount": if(payload.amount == 1000) then (payload.amount + 200)+"" else payload.amount,
   "transferAmountCurrency": payload.currency,
-  "payeeFspFeeAmount": "0",
+  "payeeReceiveAmount": payload.amount+"",
+  "payeeFspFeeAmount": if(payload.amount == 1000) then "200" else "10",
   "payeeFspFeeAmountCurrency": payload.currency,
-  "payeeFspCommissionAmount": "0",
+  "payeeFspCommissionAmount": if(payload.amount == 1000) then "0" else "10",
   "payeeFspCommissionAmountCurrency": payload.currency,
   "expiration": payload.expiration
 }
