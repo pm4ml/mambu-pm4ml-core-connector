@@ -1,12 +1,16 @@
+
+local transferAmt = if(payload.amount == "1000") then std.toString(std.parseInt(payload.amount)+200) else payload.amount;
+local feeAmt = if(payload.amount == "1000") then "200" else "10";
+local commissionAmt = if(payload.amount == "1000") then "0" else "10";
 {
   "quoteId": payload.quoteId,
   "transactionId": payload.transactionId,
-  "transferAmount": if(payload.amount == 1000) then (payload.amount + 200)+"" else payload.amount,
+  "transferAmount": transferAmt,
   "transferAmountCurrency": payload.currency,
-  "payeeReceiveAmount": payload.amount+"",
-  "payeeFspFeeAmount": if(payload.amount == 1000) then "200" else "10",
+  "payeeReceiveAmount": payload.amount,
+  "payeeFspFeeAmount": feeAmt,
   "payeeFspFeeAmountCurrency": payload.currency,
-  "payeeFspCommissionAmount": if(payload.amount == 1000) then "0" else "10",
+  "payeeFspCommissionAmount": commissionAmt,
   "payeeFspCommissionAmountCurrency": payload.currency,
   "expiration": payload.expiration
 }
