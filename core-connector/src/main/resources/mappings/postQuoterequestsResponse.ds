@@ -1,5 +1,6 @@
 
 local transferAmt = if(payload.amount == "1000") then std.toString(std.parseInt(payload.amount)+200) else payload.amount;
+local payeeReceiveAmt = if(payload.amount == "1000") then payload.amount else "0";
 local feeAmt = if(payload.amount == "1000") then "200" else "10";
 local commissionAmt = if(payload.amount == "1000") then "0" else "10";
 {
@@ -7,6 +8,8 @@ local commissionAmt = if(payload.amount == "1000") then "0" else "10";
   "transactionId": payload.transactionId,
   "transferAmount": transferAmt,
   "transferAmountCurrency": payload.currency,
+  "payeeReceiveAmount": payeeReceiveAmt,
+  "payeeReceiveAmountCurrency": payload.currency,
   "payeeFspFeeAmount": feeAmt,
   "payeeFspFeeAmountCurrency": payload.currency,
   "payeeFspCommissionAmount": commissionAmt,
