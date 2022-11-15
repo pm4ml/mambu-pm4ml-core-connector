@@ -16,7 +16,7 @@ public class DataValidator {
         try {
             Integer intAmount = Integer.parseInt(Amount);
         } catch (NumberFormatException e) {
-            throw new CCCustomException(ErrorCode.getErrorResponse(ErrorCode.INTERNAL_SERVER_ERROR, "Invalid transfer amount."));
+            throw new CCCustomException(ErrorCode.getErrorResponse(ErrorCode.ROUNDING_VALUE_ERROR, "Invalid transfer amount."));
         }
     }
 }
